@@ -200,7 +200,7 @@ func main() {
 
 开启两个终端，分别运行服务端代码和客户端代码，服务端代码要先运行。
 
-**终端1**
+**服务端**
 
 ```bash
 $ go run server/main.go
@@ -209,7 +209,7 @@ $ go run server/main.go
 2023/06/16 18:57:02 Received: world
 ```
 
-**终端2**
+**客户端**
 
 ```bash
 $ go run client/main.go

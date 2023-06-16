@@ -1,4 +1,4 @@
-# grpc系列课程（二）：服务端流式rpc
+# grpc系列课程（三）：客户端流式rpc
 
 > 开发环境：
 >
@@ -40,12 +40,12 @@ protoc-gen-go  protoc-gen-go-grpc
 
 ## 项目开发
 
-[项目源码地址](https://github.com/silenceboychen/gostudy/tree/main/demo_2)
+[项目源码地址](https://github.com/silenceboychen/gostudy/tree/main/demo_3)
 
 ### 项目目录结构
 
 ```
-├── demo_2
+├── demo_3
 │   ├── client
 │   │   └── main.go
 │   ├── go.mod
@@ -62,7 +62,7 @@ protoc-gen-go  protoc-gen-go-grpc
 ### 项目创建
 
 ```bash
-$ mkdir demo_2 && cd demo_2
+$ mkdir demo_3 && cd demo_3
 $ go mod init
 ```
 
@@ -85,7 +85,7 @@ option go_package = "/helloworld";
 package helloworld;
 
 service Hello {
-  rpc SayHello (HelloRequest) returns (stream HelloReply) {}
+  rpc SayHello (stream HelloRequest) returns (HelloReply) {}
 }
 
 message HelloRequest {
@@ -119,9 +119,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/silenceboychen/gostudy/demo_2/helloworld"
+	"github.com/silenceboychen/gostudy/demo_3/helloworld"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"io"
 	"log"
 	"net"
 )
@@ -134,12 +135,18 @@ type server struct {
 	helloworld.UnimplementedHelloServer
 }
 
-func (s *server) SayHello(in *helloworld.HelloRequest, stream helloworld.Hello_SayHelloServer) error {
-	log.Printf("Received: %v", in.GetName())
-	for i := 0; i < 5; i++ {
-		stream.Send(&helloworld.HelloReply{Message: fmt.Sprintf("hello %s---%d", in.Name, i)})
+func (s *server) SayHello(stream helloworld.Hello_SayHelloServer) error {
+	for {
+		res, err := stream.Recv()
+		if err == io.EOF {
+			return stream.SendAndClose(&helloworld.HelloReply{Message: "over"})
+		}
+
+		if err != nil {
+			return err
+		}
+		log.Println(res.Name)
 	}
-	return nil
 }
 
 func main() {
@@ -168,11 +175,11 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/silenceboychen/gostudy/demo_2/helloworld"
+	"github.com/silenceboychen/gostudy/demo_3/helloworld"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"io"
 	"log"
+	"strconv"
 	"time"
 )
 
@@ -193,25 +200,24 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	stream, err := c.SayHello(ctx, &helloworld.HelloRequest{Name: *name})
+	stream, err := c.SayHello(ctx)
 	if err != nil {
-		log.Fatalf("could not call: %v", err)
+		log.Fatalf("Upload list err: %v", err)
 	}
-
-	for {
-		res, err := stream.Recv()
-		if err == io.EOF {
-			break
-		}
-
+	for n := 0; n < 5; n++ {
+		//向流中发送消息
+		err := stream.Send(&helloworld.HelloRequest{Name: "stream client rpc " + strconv.Itoa(n)})
 		if err != nil {
-			log.Printf("stream error: %v", err)
+			log.Fatalf("stream request err: %v", err)
 		}
-
-		log.Printf("%s", res.Message)
 	}
+	//关闭流并获取返回的消息
+	res, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("SayHello get response err: %v", err)
+	}
+	log.Println(res)
 }
-
 ```
 
 ### 项目运行
@@ -223,8 +229,12 @@ func main() {
 ```bash
 $ go run server/main.go
 
-2023/06/16 18:56:57 server listening at [::]:8080
-2023/06/16 18:57:02 Received: world
+2023/06/16 20:24:15 server listening at [::]:8080
+2023/06/16 20:24:22 stream client rpc 0
+2023/06/16 20:24:22 stream client rpc 1
+2023/06/16 20:24:22 stream client rpc 2
+2023/06/16 20:24:22 stream client rpc 3
+2023/06/16 20:24:22 stream client rpc 4
 ```
 
 **客户端**
@@ -232,11 +242,7 @@ $ go run server/main.go
 ```bash
 $ go run client/main.go
 
-2023/06/16 20:11:55 hello world---0
-2023/06/16 20:11:55 hello world---1
-2023/06/16 20:11:55 hello world---2
-2023/06/16 20:11:55 hello world---3
-2023/06/16 20:11:55 hello world---4
+2023/06/16 20:24:22 message:"over"
 ```
 
-下一篇将向大家介绍客户端流式rpc。
+下一篇将向大家介绍双向流式rpc。
