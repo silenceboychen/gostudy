@@ -40,6 +40,8 @@ protoc-gen-go  protoc-gen-go-grpc
 
 ## 项目开发
 
+[项目源码地址](https://github.com/silenceboychen/gostudy/tree/main/demo_1)
+
 ### 项目目录结构
 
 ```
