@@ -1,4 +1,4 @@
-module github.com/silenceboychen/gostudy/demo_1
+module github.com/silenceboychen/gostudy/demo_5
 
 go 1.19
 
