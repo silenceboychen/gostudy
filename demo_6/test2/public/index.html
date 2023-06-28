@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SSE test</title>
+    <script type="text/javascript">
+        const es = new EventSource("http://localhost:8080/events");
+        es.addEventListener("test-event", (e) => {
+            document.getElementById("test")
+                .insertAdjacentHTML("beforeend", "<li>" + e.data + "</li>");
+        });
+        es.onerror = function (e) {
+            // readyState说明
+            // 0：浏览器与服务端尚未建立连接或连接已被关闭
+            // 1：浏览器与服务端已成功连接，浏览器正在处理接收到的事件及数据
+            // 2：浏览器与服务端建立连接失败，客户端不再继续建立与服务端之间的连接
+            console.log("readyState = " + e.currentTarget.readyState);
+        }
+    </script>
+</head>
+<body>
+<h1>SSE test</h1>
+<div>
+    <ul id="test">
+    </ul>
+</div>
+</body>
+</html>
