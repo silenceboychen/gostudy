@@ -148,13 +148,13 @@ es := eventsource.New(
 
 前端创建sse连接时也可添加允许跨域参数：
 
-[点击查看源代码](https://github.com/silenceboychen/gostudy/tree/main/demo_6/test4)
-
 ```javascript
 const es = new EventSource("http://localhost:8080/events", { withCredentials: true });
 ```
 
 ## 解决火狐浏览器断开不会自动重连问题
+
+[点击查看源代码](https://github.com/silenceboychen/gostudy/tree/main/demo_6/test4)
 
 在Chrome浏览器中sse断开后会自动重连，但firefox浏览器中断开后不会重连，解决办法是，前端js通过判断连接状态主动进行重连请求，通过判断readyState的值进行重新调用初始化操作
 
