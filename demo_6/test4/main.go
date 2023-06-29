@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// 支持跨域的sse
+// 解决火狐浏览器断开不会自动重连问题
 func main() {
 	es := eventsource.New(
 		eventsource.DefaultSettings(),
